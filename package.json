@@ -20,9 +20,9 @@
       }
     ],
     "configuration": {
-      "title": "Deprecated",
+      "title": "vscode-deprecated",
       "properties": {
-        "textDecoration": {
+        "vscode-deprecated.textDecoration": {
           "type": "string",
           "default": "line-through",
           "enum": [
@@ -33,7 +33,7 @@
           ],
           "title": "textDecoration of Deprecated Identifies"
         },
-        "fontStyle": {
+        "vscode-deprecated.fontStyle": {
           "type": "string",
           "enum": [
             "inherit",
@@ -43,7 +43,7 @@
           ],
           "title": "fontStyle for Deprecated Identifies"
         },
-        "fontWeight": {
+        "vscode-deprecated.fontWeight": {
           "type": [
             "string",
             "number"
@@ -65,16 +65,15 @@
           ],
           "title": "fontWeight for Deprecated Identifies"
         },
-        "color": {
+        "vscode-deprecated.color": {
           "type": "string",
           "title": "Color for Deprecated Identifies"
         },
-        "backgroundColor": {
+        "vscode-deprecated.backgroundColor": {
           "type": "string",
-          "default": "blue",
           "title": "backgroundColor for Deprecated Identifies"
         },
-        "after": {
+        "vscode-deprecated.after": {
           "type": "object",
           "title": "是否在后面插入提示"
         }
