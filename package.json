@@ -2,7 +2,7 @@
   "name": "vscode-deprecated",
   "displayName": "VS Code JSDocs Deprecated",
   "license": "MIT",
-  "icon": "images/icon.png",
+  "icon": "static/icon.png",
   "version": "0.6.0",
   "description": "VSCode extension that checks for deprecated imports",
   "main": "./dist/extension.js",
