@@ -15,10 +15,44 @@
   "contributes": {
     "commands": [
       {
-        "title": "VSCode Deprecated",
-        "command": "vsCodeDeprecated.showAnnotations"
+        "command": "vscode-deprecated.showDeprecated",
+        "title": "标识不赞成使用的属性或方法"
       }
-    ]
+    ],
+    "configuration":{
+      "title": "Deprecated",
+      "properties": {
+        "textDecoration": {
+          "type": "string",
+          "default": "line-through",
+          "enum": ["line-through", "underline", "overline", "none"],
+          "title": "textDecoration of Deprecated Identifies"
+        },
+        "fontStyle": {
+          "type": "string",
+          "enum": ["inherit", "normal", "italic", "oblique"],
+          "title": "fontStyle for Deprecated Identifies"
+        },
+        "fontWeight": {
+          "type": ["string", "number"],
+          "enum": ["inherit", "normal", "bold", "bolder", 100, 200, 300, 400, 500, 600, 700, 800, 900],
+          "title": "fontWeight for Deprecated Identifies"
+        },
+        "color": {
+          "type": "string",
+          "title": "Color for Deprecated Identifies"
+        },
+        "backgroundColor": {
+          "type": "string",
+          "default": "blue",
+          "title": "backgroundColor for Deprecated Identifies"
+        },
+        "after": {
+          "type": "object",
+          "title": "是否在后面插入提示"
+        }
+      }
+    }
   },
   "engines": {
     "vscode": "^1.45.0"
@@ -32,22 +66,23 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:balajmarius/vscode-jsdocs-deprecated.git"
+    "url": "https://github.com/moesuiga/vscode-jsdocs-deprecated.git"
   },
   "keywords": [
     "vscode",
     "extension",
     "deprecated"
   ],
-  "author": "Marius Balaj",
-  "publisher": "balajmarius",
+  "author": "moesuiga",
+  "publisher": "double",
   "contributors": [
+    "Marius Balaj",
     "Ioana Verebi"
   ],
   "bugs": {
-    "url": "https://github.com/balajmarius/vscode-jsdocs-deprecated/issues"
+    "url": "https://github.com/moesuiga/vscode-jsdocs-deprecated/issues"
   },
-  "homepage": "https://github.com/balajmarius/vscode-jsdocs-deprecated#readme",
+  "homepage": "https://github.com/moesuiga/vscode-jsdocs-deprecated#readme",
   "dependencies": {
     "typescript": "^3.9.3"
   },

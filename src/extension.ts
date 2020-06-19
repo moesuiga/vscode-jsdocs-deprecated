@@ -1,7 +1,20 @@
 import * as ts from "typescript";
 import * as vscode from "vscode";
 
+const { window, workspace, commands } = vscode;
+
 const JSDOC_DEPRECATED_ANNOTATION: string = "*@deprecated*";
+
+const cache = new Map<string, vscode.Range[]>();
+
+const languageIds = [
+  'javascript',
+  'javascriptreact',
+  'typescript',
+  'typescriptreact'
+];
+
+let decorationType: vscode.TextEditorDecorationType;
 
 function getIdentifierPositions(document: vscode.TextDocument): vscode.Position[] {
   const positions: vscode.Position[] = [];
@@ -27,7 +40,7 @@ async function getHoverAnnotations(
   return Promise.all(
     positions.map(
       (position: vscode.Position): Thenable<vscode.Hover[]> =>
-        vscode.commands.executeCommand("vscode.executeHoverProvider", document.uri, position)
+        commands.executeCommand("vscode.executeHoverProvider", document.uri, position)
     )
   );
 }
@@ -52,7 +65,6 @@ function paintAnnotations(
   ranges: vscode.Range[],
   decorationType: vscode.TextEditorDecorationType
 ) {
-  editor.setDecorations(decorationType, []);
   editor.setDecorations(decorationType, ranges);
 }
 
@@ -62,30 +74,118 @@ async function onDidUpdateTextDocument(
   decorationType: vscode.TextEditorDecorationType
 ) {
   if (editor) {
+    if (!languageIds.includes(editor.document.languageId)) return;
+
     const positions: vscode.Position[] = getIdentifierPositions(document);
     const annotations: vscode.Hover[][] = await getHoverAnnotations(document, positions);
     const deprecated: vscode.Range[] = getDeprecatedRanges(annotations);
 
     paintAnnotations(editor, deprecated, decorationType);
+    cache.set(editor.document.fileName, deprecated);
   }
 }
 
-export function activate(): void {
-  const decorationType: vscode.TextEditorDecorationType = vscode.window.createTextEditorDecorationType({
-    textDecoration: "line-through",
+
+
+function setDecorationType() {
+  const extConfig = workspace.getConfiguration('vscode-deprecated');
+
+  const options: vscode.DecorationRenderOptions = {
+    textDecoration: 'line-through',
+  };
+
+  const configurable = [
+    'textDecoration',
+    'fontStyle',
+    'fontWeight',
+    'color',
+    'backgroundColor',
+    'after'
+  ];
+
+  configurable.forEach((style) => {
+    if (extConfig.get(style)) {
+      options[style] = extConfig.get(style);
+    }
   });
 
-  setImmediate(() =>
-    onDidUpdateTextDocument(vscode.window.activeTextEditor.document, vscode.window.activeTextEditor, decorationType)
-  );
+  decorationType = window.createTextEditorDecorationType(options);
+}
 
-  vscode.workspace.onDidOpenTextDocument((document: vscode.TextDocument) => {
-    onDidUpdateTextDocument(document, vscode.window.activeTextEditor, decorationType);
+export function activate(context: vscode.ExtensionContext): void {
+  console.log('vscode-deprecated activate.')
+  console.time('deprecated');
+  setDecorationType();
+
+  if (window.activeTextEditor) {
+    onDidUpdateTextDocument(window.activeTextEditor.document, window.activeTextEditor, decorationType)
+      .then(() => console.timeEnd('deprecated'));
+  }
+
+  const registerDispose = commands.registerCommand('vscode-deprecated.showDeprecated', () => {
+    const {activeTextEditor} = window;
+    if (!activeTextEditor) {
+      window.showErrorMessage('No activeTextEditor now!');
+      return;
+    }
+    if (activeTextEditor) {
+      onDidUpdateTextDocument(activeTextEditor.document, activeTextEditor, decorationType)
+    }
   });
-  vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
-    onDidUpdateTextDocument(document, vscode.window.activeTextEditor, decorationType);
+
+  const changeConfigDispose = workspace.onDidChangeConfiguration(() => {
+    console.log('onDidChangeConfiguration')
+    setDecorationType();
   });
-  vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor) => {
+
+  const changeTDDispose = workspace.onDidChangeTextDocument((e) => {
+    const { fileName, languageId } = e.document;
+    console.log('onDidChangeTextDocument', fileName, languageId)
+    if (!languageIds.includes(languageId)) return;
+    onDidUpdateTextDocument(e.document, window.activeTextEditor, decorationType);
+  });
+
+  const openTDDispose = workspace.onDidOpenTextDocument((document: vscode.TextDocument) => {
+    const { fileName, languageId } = document;
+    console.log('onDidOpenTextDocument', fileName, languageId)
+    if (!languageIds.includes(languageId)) return;
+    if (cache.has(fileName)) {
+      paintAnnotations(window.activeTextEditor, cache.get(fileName), decorationType);
+      return;
+    }
+    onDidUpdateTextDocument(document, window.activeTextEditor, decorationType);
+  });
+
+  const saveTDDispose = workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
+    const { fileName, languageId } = document;
+    console.log('onDidSaveTextDocument', fileName, languageId)
+    if (!languageIds.includes(languageId)) return;
+    onDidUpdateTextDocument(document, window.activeTextEditor, decorationType);
+  });
+
+  const changeATEDispose = window.onDidChangeActiveTextEditor((editor: vscode.TextEditor) => {
+    const { fileName, languageId } = editor.document;
+    console.log('onDidChangeActiveTextEditor', fileName, languageId)
+    if (!languageIds.includes(languageId)) return;
+    if (cache.has(fileName)) {
+      console.log(cache.get(fileName))
+      paintAnnotations(editor, cache.get(fileName), decorationType);
+      return;
+    }
     onDidUpdateTextDocument(editor.document, editor, decorationType);
   });
+
+  context.subscriptions.push(
+    registerDispose,
+    changeConfigDispose,
+    changeTDDispose,
+    openTDDispose,
+    saveTDDispose,
+    changeATEDispose
+  );
+}
+
+export function deactivate(): void {
+  console.log('deactivate');
+  cache.clear();
 }
