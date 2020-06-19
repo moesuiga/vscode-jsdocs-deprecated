@@ -72,10 +72,6 @@
         "vscode-deprecated.backgroundColor": {
           "type": "string",
           "title": "backgroundColor for Deprecated Identifies"
-        },
-        "vscode-deprecated.after": {
-          "type": "object",
-          "title": "是否在后面插入提示"
         }
       }
     }
